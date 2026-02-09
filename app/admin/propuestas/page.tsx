@@ -1,0 +1,287 @@
+"use client"
+
+import { useState } from "react"
+import useSWR from "swr"
+import {
+  Plus,
+  Eye,
+  Send,
+  Copy,
+  ExternalLink,
+  History,
+} from "lucide-react"
+import { toast } from "sonner"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import type { Cliente, Plantilla, Propuesta } from "@/lib/types"
+import { PropuestaCreator } from "@/components/propuesta-creator"
+import { PropuestaPreview } from "@/components/propuesta-preview"
+import { PropuestaVersiones } from "@/components/propuesta-versiones"
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json())
+
+export default function PropuestasPage() {
+  const { data: propuestas = [], mutate } = useSWR<Propuesta[]>(
+    "/api/propuestas",
+    fetcher,
+  )
+  const { data: clientes = [] } = useSWR<Cliente[]>("/api/clientes", fetcher)
+  const { data: plantillas = [] } = useSWR<Plantilla[]>(
+    "/api/plantillas?activas=true",
+    fetcher,
+  )
+
+  const [creatorOpen, setCreatorOpen] = useState(false)
+  const [previewPropuesta, setPreviewPropuesta] = useState<Propuesta | null>(
+    null,
+  )
+  const [versionesPropuesta, setVersionesPropuesta] =
+    useState<Propuesta | null>(null)
+
+  function getClienteNombre(id: string) {
+    return clientes.find((c) => c.id === id)?.nombre || "Desconocido"
+  }
+
+  function getPlantillaNombre(id: string) {
+    return plantillas.find((p) => p.id === id)?.nombre || "—"
+  }
+
+  function copyPortalLink(token: string) {
+    const url = `${window.location.origin}/portal/${token}`
+    navigator.clipboard.writeText(url)
+    toast.success("Enlace copiado al portapapeles")
+  }
+
+  const stats = {
+    total: propuestas.length,
+    activas: propuestas.filter((p) => p.estatus === "Activa").length,
+    aprobadas: propuestas.filter((p) => p.estatus === "Aprobada").length,
+    declinadas: propuestas.filter((p) => p.estatus === "Declinada").length,
+  }
+
+  return (
+    <div className="p-6 lg:p-8">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            Propuestas
+          </h1>
+          <p className="mt-1 text-muted-foreground">
+            Crea y gestiona propuestas comerciales
+          </p>
+        </div>
+        <Button onClick={() => setCreatorOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Nueva Propuesta
+        </Button>
+      </div>
+
+      <div className="mb-6 grid gap-3 sm:grid-cols-4">
+        <Card>
+          <CardContent className="pt-4">
+            <p className="text-sm text-muted-foreground">Total</p>
+            <p className="text-2xl font-bold text-foreground">{stats.total}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <p className="text-sm text-muted-foreground">Activas</p>
+            <p className="text-2xl font-bold text-primary">{stats.activas}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <p className="text-sm text-muted-foreground">Aprobadas</p>
+            <p className="text-2xl font-bold text-[hsl(var(--success))]">
+              {stats.aprobadas}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <p className="text-sm text-muted-foreground">Declinadas</p>
+            <p className="text-2xl font-bold text-destructive">
+              {stats.declinadas}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="rounded-lg border border-border bg-card">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Cliente</TableHead>
+              <TableHead className="hidden md:table-cell">Plantilla</TableHead>
+              <TableHead>Estatus</TableHead>
+              <TableHead className="hidden md:table-cell">Version</TableHead>
+              <TableHead className="hidden lg:table-cell">Fecha</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {propuestas.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={6}
+                  className="py-8 text-center text-muted-foreground"
+                >
+                  No hay propuestas. Crea una nueva para empezar.
+                </TableCell>
+              </TableRow>
+            ) : (
+              propuestas.map((p) => (
+                <TableRow key={p.id}>
+                  <TableCell className="font-medium text-foreground">
+                    {getClienteNombre(p.idCliente)}
+                  </TableCell>
+                  <TableCell className="hidden text-muted-foreground md:table-cell">
+                    {getPlantillaNombre(p.idPlantilla)}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        p.estatus === "Aprobada"
+                          ? "default"
+                          : p.estatus === "Declinada"
+                            ? "destructive"
+                            : "secondary"
+                      }
+                    >
+                      {p.estatus}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    <button
+                      type="button"
+                      onClick={() => setVersionesPropuesta(p)}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/50 px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                    >
+                      <History className="h-3 w-3" />
+                      v{p.versionActual}
+                      <span className="text-muted-foreground">
+                        ({p.versiones.length})
+                      </span>
+                    </button>
+                  </TableCell>
+                  <TableCell className="hidden text-muted-foreground lg:table-cell">
+                    {new Date(p.creadaEn).toLocaleDateString("es-PA")}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setVersionesPropuesta(p)}
+                        aria-label="Historial de versiones"
+                      >
+                        <History className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setPreviewPropuesta(p)}
+                        aria-label="Vista previa"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => copyPortalLink(p.hashToken)}
+                        aria-label="Copiar enlace"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      {p.estatus === "Activa" && !p.tokenUsado && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            copyPortalLink(p.hashToken)
+                            toast.info(
+                              "Enlace del portal copiado. En produccion, se enviaria por correo SMTP.",
+                            )
+                          }}
+                          aria-label="Enviar propuesta"
+                        >
+                          <Send className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {p.estatus === "Activa" && !p.tokenUsado && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          asChild
+                        >
+                          <a
+                            href={`/portal/${p.hashToken}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="Abrir portal del cliente"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {creatorOpen && (
+        <PropuestaCreator
+          open={creatorOpen}
+          onOpenChange={setCreatorOpen}
+          clientes={clientes.filter((c) => c.estatus === "Activo")}
+          plantillas={plantillas}
+          onCreated={() => {
+            mutate()
+            setCreatorOpen(false)
+          }}
+        />
+      )}
+
+      {previewPropuesta && (
+        <PropuestaPreview
+          open={!!previewPropuesta}
+          onOpenChange={(open) => {
+            if (!open) setPreviewPropuesta(null)
+          }}
+          propuesta={previewPropuesta}
+          cliente={clientes.find((c) => c.id === previewPropuesta.idCliente)}
+          plantilla={plantillas.find(
+            (p) => p.id === previewPropuesta.idPlantilla,
+          )}
+        />
+      )}
+
+      {versionesPropuesta && (
+        <PropuestaVersiones
+          open={!!versionesPropuesta}
+          onOpenChange={(open) => {
+            if (!open) setVersionesPropuesta(null)
+          }}
+          propuesta={versionesPropuesta}
+          plantilla={plantillas.find(
+            (p) => p.id === versionesPropuesta.idPlantilla,
+          )}
+          onUpdated={() => mutate()}
+        />
+      )}
+    </div>
+  )
+}
