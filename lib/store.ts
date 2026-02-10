@@ -5,6 +5,7 @@ import type {
   PropuestaVersion,
   KardexDocumento,
   ConfigSMTP,
+  Usuario,
 } from "./types"
 
 function generateId(): string {
@@ -19,6 +20,17 @@ function generateToken(): string {
   )
 }
 
+// Simple hash function for demo purposes
+function simpleHash(str: string): string {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i)
+    hash = (hash << 5) - hash + char
+    hash |= 0
+  }
+  return "hash_" + Math.abs(hash).toString(36) + "_" + Date.now().toString(36)
+}
+
 // In-memory store
 let clientes: Cliente[] = [
   {
@@ -28,6 +40,7 @@ let clientes: Cliente[] = [
     dv: "78",
     telefono: "+507 6000-1234",
     emailContacto: "contacto@servidoresrapidos.net",
+    contacto: "Juan Perez",
     emailFacturacion: "facturacion@servidoresrapidos.net",
     pais: "Panama",
     tipoContribuyente: "Juridico",
@@ -42,6 +55,7 @@ let clientes: Cliente[] = [
     dv: "12",
     telefono: "+507 6111-5678",
     emailContacto: "info@techsolutions.com",
+    contacto: "Maria Lopez",
     emailFacturacion: "billing@techsolutions.com",
     pais: "Panama",
     tipoContribuyente: "Juridico",
@@ -122,6 +136,17 @@ let configSMTP: ConfigSMTP = {
   usuario: "",
   password: "",
 }
+
+let usuarios: Usuario[] = [
+  {
+    id: "usr-1",
+    nombre: "Administrador",
+    correo: "admin@servidoresrapidos.net",
+    passwordHash: simpleHash("admin123"),
+    estatus: "Activo",
+    creadoEn: new Date().toISOString(),
+  },
+]
 
 // --- Clientes ---
 export function getClientes(): Cliente[] {
@@ -318,4 +343,46 @@ export function getConfigSMTP(): ConfigSMTP {
 export function actualizarConfigSMTP(data: Partial<ConfigSMTP>): ConfigSMTP {
   configSMTP = { ...configSMTP, ...data }
   return { ...configSMTP }
+}
+
+// --- Usuarios ---
+export function getUsuarios(): Usuario[] {
+  return usuarios.map((u) => ({ ...u }))
+}
+
+export function getUsuario(id: string): Usuario | undefined {
+  const u = usuarios.find((u) => u.id === id)
+  return u ? { ...u } : undefined
+}
+
+export function crearUsuario(data: Omit<Usuario, "id" | "creadoEn" | "passwordHash"> & { password: string }): Usuario {
+  const nuevo: Usuario = {
+    id: generateId(),
+    nombre: data.nombre,
+    correo: data.correo,
+    passwordHash: simpleHash(data.password),
+    estatus: data.estatus,
+    creadoEn: new Date().toISOString(),
+  }
+  usuarios = [...usuarios, nuevo]
+  return nuevo
+}
+
+export function actualizarUsuario(id: string, data: Partial<Omit<Usuario, "passwordHash">> & { password?: string }): Usuario | undefined {
+  const idx = usuarios.findIndex((u) => u.id === id)
+  if (idx === -1) return undefined
+  const { password, ...rest } = data
+  usuarios[idx] = {
+    ...usuarios[idx],
+    ...rest,
+    ...(password ? { passwordHash: simpleHash(password) } : {}),
+  }
+  usuarios = [...usuarios]
+  return usuarios[idx]
+}
+
+export function eliminarUsuario(id: string): boolean {
+  const len = usuarios.length
+  usuarios = usuarios.filter((u) => u.id !== id)
+  return usuarios.length < len
 }

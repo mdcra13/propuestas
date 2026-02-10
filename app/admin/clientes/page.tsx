@@ -120,6 +120,7 @@ export default function ClientesPage() {
             <TableRow>
               <TableHead>Nombre</TableHead>
               <TableHead>RUC-DV</TableHead>
+              <TableHead className="hidden md:table-cell">Contacto</TableHead>
               <TableHead className="hidden md:table-cell">Email</TableHead>
               <TableHead className="hidden lg:table-cell">Tipo</TableHead>
               <TableHead>Estatus</TableHead>
@@ -130,7 +131,7 @@ export default function ClientesPage() {
             {filtered.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={7}
                   className="py-8 text-center text-muted-foreground"
                 >
                   No se encontraron clientes
@@ -144,6 +145,9 @@ export default function ClientesPage() {
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {cliente.ruc}-{cliente.dv}
+                  </TableCell>
+                  <TableCell className="hidden text-muted-foreground md:table-cell">
+                    {cliente.contacto}
                   </TableCell>
                   <TableCell className="hidden text-muted-foreground md:table-cell">
                     {cliente.emailContacto}

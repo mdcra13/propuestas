@@ -3,6 +3,7 @@
 import React from "react"
 
 import { useState } from "react"
+import { Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -45,6 +46,7 @@ export function ClienteForm({
   const [emailContacto, setEmailContacto] = useState(
     cliente?.emailContacto || "",
   )
+  const [contacto, setContacto] = useState(cliente?.contacto || "")
   const [emailFacturacion, setEmailFacturacion] = useState(
     cliente?.emailFacturacion || "",
   )
@@ -54,6 +56,20 @@ export function ClienteForm({
   const [estatus, setEstatus] = useState<EstatusCliente>(
     cliente?.estatus || "Activo",
   )
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState(cliente?.logoUrl || "")
+
+  function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) {
+      setLogoFile(file)
+      const reader = new FileReader()
+      reader.onload = (ev) => {
+        setLogoPreview(ev.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -63,10 +79,11 @@ export function ClienteForm({
       dv,
       telefono,
       emailContacto,
+      contacto,
       emailFacturacion,
       pais,
       tipoContribuyente,
-      logoUrl: cliente?.logoUrl || "",
+      logoUrl: logoPreview || cliente?.logoUrl || "",
       estatus,
     })
     onOpenChange(false)
@@ -87,12 +104,12 @@ export function ClienteForm({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="nombre">Nombre / Razon Social</Label>
+            <Label htmlFor="nombre">Nombre de Cliente</Label>
             <Input
               id="nombre"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
-              placeholder="Nombre de la empresa"
+              placeholder="Nombre de la empresa o persona"
               required
             />
           </div>
@@ -120,6 +137,17 @@ export function ClienteForm({
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="telefono">Telefono</Label>
+            <Input
+              id="telefono"
+              value={telefono}
+              onChange={(e) => setTelefono(e.target.value)}
+              placeholder="+507 6000-1234"
+              required={modo === "completo"}
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="emailContacto">Email de Contacto</Label>
             <Input
               id="emailContacto"
@@ -131,21 +159,22 @@ export function ClienteForm({
             />
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="contacto">Contacto</Label>
+            <Input
+              id="contacto"
+              value={contacto}
+              onChange={(e) => setContacto(e.target.value)}
+              placeholder="Nombre de la persona de contacto"
+              required={modo === "completo"}
+            />
+          </div>
+
           {modo === "completo" && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="telefono">Telefono</Label>
-                <Input
-                  id="telefono"
-                  value={telefono}
-                  onChange={(e) => setTelefono(e.target.value)}
-                  placeholder="+507 6000-1234"
-                />
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="emailFacturacion">
-                  Email de Facturacion
+                  Email para Facturacion Electronica
                 </Label>
                 <Input
                   id="emailFacturacion"
@@ -156,36 +185,71 @@ export function ClienteForm({
                 />
               </div>
 
-              <div className="flex gap-3">
-                <div className="flex-1 space-y-2">
-                  <Label htmlFor="pais">Pais</Label>
-                  <Input
-                    id="pais"
-                    value={pais}
-                    onChange={(e) => setPais(e.target.value)}
-                    placeholder="Panama"
-                  />
-                </div>
-                <div className="flex-1 space-y-2">
-                  <Label>Tipo de Contribuyente</Label>
-                  <Select
-                    value={tipoContribuyente}
-                    onValueChange={(v) =>
-                      setTipoContribuyente(v as TipoContribuyente)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Natural">Natural</SelectItem>
-                      <SelectItem value="Juridico">Juridico</SelectItem>
-                      <SelectItem value="Extranjero">Extranjero</SelectItem>
-                      <SelectItem value="Agente Retencion">
-                        Agente Retencion
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+              <div className="space-y-2">
+                <Label htmlFor="pais">Pais</Label>
+                <Input
+                  id="pais"
+                  value={pais}
+                  onChange={(e) => setPais(e.target.value)}
+                  placeholder="Panama"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Tipo de Contribuyente</Label>
+                <Select
+                  value={tipoContribuyente}
+                  onValueChange={(v) =>
+                    setTipoContribuyente(v as TipoContribuyente)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Natural">Natural</SelectItem>
+                    <SelectItem value="Juridico">Juridico</SelectItem>
+                    <SelectItem value="Extranjero">Extranjero</SelectItem>
+                    <SelectItem value="Agente de Retencion - Exento">
+                      Agente de Retencion - Exento
+                    </SelectItem>
+                    <SelectItem value="Agente de Retencion - Gravado">
+                      Agente de Retencion - Gravado
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Logo</Label>
+                <div className="flex items-center gap-4">
+                  {logoPreview && (
+                    <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
+                      <img
+                        src={logoPreview}
+                        alt="Logo preview"
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <label
+                      htmlFor="logo-upload"
+                      className="flex cursor-pointer items-center gap-2 rounded-lg border-2 border-dashed border-border px-4 py-3 transition-colors hover:border-primary/50"
+                    >
+                      <Upload className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">
+                        {logoFile ? logoFile.name : "Seleccionar imagen"}
+                      </span>
+                    </label>
+                    <Input
+                      id="logo-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoChange}
+                      className="hidden"
+                    />
+                  </div>
                 </div>
               </div>
 

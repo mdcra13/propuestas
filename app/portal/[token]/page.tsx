@@ -42,11 +42,14 @@ export default function PortalPage({
 
   // Onboarding state
   const [avisoOperacion, setAvisoOperacion] = useState<File | null>(null)
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState("")
   const [kardexDatos, setKardexDatos] = useState({
-    nombreLegal: "",
-    representanteLegal: "",
-    direccionFiscal: "",
-    telefonoEmpresa: "",
+    ruc: "",
+    dv: "",
+    telefono: "",
+    emailFacturacion: "",
+    tipoContribuyente: "Juridico" as string,
   })
 
   useEffect(() => {
@@ -241,70 +244,138 @@ export default function PortalPage({
                 <CardTitle className="text-foreground">Datos del Kardex</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="flex gap-3">
+                  <div className="flex-1 space-y-2">
+                    <Label htmlFor="kardex-ruc">RUC</Label>
+                    <Input
+                      id="kardex-ruc"
+                      value={kardexDatos.ruc}
+                      onChange={(e) =>
+                        setKardexDatos((p) => ({
+                          ...p,
+                          ruc: e.target.value,
+                        }))
+                      }
+                      placeholder="155123456"
+                      required
+                    />
+                  </div>
+                  <div className="w-20 space-y-2">
+                    <Label htmlFor="kardex-dv">DV</Label>
+                    <Input
+                      id="kardex-dv"
+                      value={kardexDatos.dv}
+                      onChange={(e) =>
+                        setKardexDatos((p) => ({
+                          ...p,
+                          dv: e.target.value,
+                        }))
+                      }
+                      placeholder="78"
+                      required
+                    />
+                  </div>
+                </div>
                 <div className="space-y-2">
-                  <Label htmlFor="nombreLegal">
-                    Nombre Legal Completo
-                  </Label>
+                  <Label htmlFor="kardex-telefono">Telefono</Label>
                   <Input
-                    id="nombreLegal"
-                    value={kardexDatos.nombreLegal}
+                    id="kardex-telefono"
+                    value={kardexDatos.telefono}
                     onChange={(e) =>
                       setKardexDatos((p) => ({
                         ...p,
-                        nombreLegal: e.target.value,
+                        telefono: e.target.value,
                       }))
                     }
-                    placeholder="Razon social completa"
+                    placeholder="+507 6000-0000"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="representante">
-                    Representante Legal
+                  <Label htmlFor="kardex-emailFact">
+                    Email para Facturacion Electronica
                   </Label>
                   <Input
-                    id="representante"
-                    value={kardexDatos.representanteLegal}
+                    id="kardex-emailFact"
+                    type="email"
+                    value={kardexDatos.emailFacturacion}
                     onChange={(e) =>
                       setKardexDatos((p) => ({
                         ...p,
-                        representanteLegal: e.target.value,
+                        emailFacturacion: e.target.value,
                       }))
                     }
-                    placeholder="Nombre del representante legal"
+                    placeholder="facturacion@empresa.com"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="direccion">Direccion Fiscal</Label>
-                  <Input
-                    id="direccion"
-                    value={kardexDatos.direccionFiscal}
+                  <Label>Tipo de Contribuyente</Label>
+                  <select
+                    value={kardexDatos.tipoContribuyente}
                     onChange={(e) =>
                       setKardexDatos((p) => ({
                         ...p,
-                        direccionFiscal: e.target.value,
+                        tipoContribuyente: e.target.value,
                       }))
                     }
-                    placeholder="Direccion completa"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     required
-                  />
+                  >
+                    <option value="Natural">Natural</option>
+                    <option value="Juridico">Juridico</option>
+                    <option value="Extranjero">Extranjero</option>
+                    <option value="Agente de Retencion - Exento">
+                      Agente de Retencion - Exento
+                    </option>
+                    <option value="Agente de Retencion - Gravado">
+                      Agente de Retencion - Gravado
+                    </option>
+                  </select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="telefonoEmp">
-                    Telefono de la Empresa
-                  </Label>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-foreground">Logo</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-6">
+                  {logoPreview && (
+                    <div className="mb-3 flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
+                      <img
+                        src={logoPreview}
+                        alt="Logo preview"
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                  )}
+                  <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
+                  <p className="mb-2 text-sm text-muted-foreground">
+                    Selecciona tu logo
+                  </p>
                   <Input
-                    id="telefonoEmp"
-                    value={kardexDatos.telefonoEmpresa}
-                    onChange={(e) =>
-                      setKardexDatos((p) => ({
-                        ...p,
-                        telefonoEmpresa: e.target.value,
-                      }))
-                    }
-                    placeholder="+507 000-0000"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null
+                      setLogoFile(file)
+                      if (file) {
+                        const reader = new FileReader()
+                        reader.onload = (ev) => {
+                          setLogoPreview(ev.target?.result as string)
+                        }
+                        reader.readAsDataURL(file)
+                      }
+                    }}
+                    className="max-w-xs"
                   />
+                  {logoFile && (
+                    <p className="mt-2 text-sm text-[hsl(var(--success))]">
+                      Archivo: {logoFile.name}
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -314,10 +385,10 @@ export default function PortalPage({
                 <CardTitle className="text-foreground">Aviso de Operacion</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-8">
-                  <Upload className="mb-3 h-10 w-10 text-muted-foreground" />
+                <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-6">
+                  <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
                   <p className="mb-2 text-sm text-muted-foreground">
-                    Arrastra o selecciona el archivo
+                    Selecciona el archivo del aviso de operacion
                   </p>
                   <Input
                     type="file"
@@ -329,7 +400,7 @@ export default function PortalPage({
                   />
                   {avisoOperacion && (
                     <p className="mt-2 text-sm text-[hsl(var(--success))]">
-                      Archivo seleccionado: {avisoOperacion.name}
+                      Archivo: {avisoOperacion.name}
                     </p>
                   )}
                 </div>

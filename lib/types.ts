@@ -1,4 +1,9 @@
-export type TipoContribuyente = "Natural" | "Juridico" | "Extranjero" | "Agente Retencion"
+export type TipoContribuyente =
+  | "Natural"
+  | "Juridico"
+  | "Extranjero"
+  | "Agente de Retencion - Exento"
+  | "Agente de Retencion - Gravado"
 
 export type EstatusCliente = "Activo" | "Inactivo"
 
@@ -8,6 +13,8 @@ export type EstatusPlantilla = "Activa" | "Inactiva"
 
 export type EstatusPropuesta = "Activa" | "Aprobada" | "Declinada"
 
+export type EstatusUsuario = "Activo" | "Inactivo"
+
 export interface Cliente {
   id: string
   nombre: string
@@ -15,11 +22,21 @@ export interface Cliente {
   dv: string
   telefono: string
   emailContacto: string
+  contacto: string
   emailFacturacion: string
   pais: string
   tipoContribuyente: TipoContribuyente
   logoUrl: string
   estatus: EstatusCliente
+  creadoEn: string
+}
+
+export interface Usuario {
+  id: string
+  nombre: string
+  correo: string
+  passwordHash: string
+  estatus: EstatusUsuario
   creadoEn: string
 }
 
@@ -65,8 +82,13 @@ export interface Propuesta {
 export interface KardexDocumento {
   id: string
   idPropuesta: string
+  ruc: string
+  dv: string
+  telefono: string
+  emailFacturacion: string
+  tipoContribuyente: TipoContribuyente
+  logoUrl: string
   avisoOperacionUrl: string
-  datosAdicionales: Record<string, string>
   completado: boolean
   creadoEn: string
 }

@@ -48,7 +48,7 @@ export default function DashboardPage() {
     <div className="p-6 lg:p-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Dashboard
+          Panel
         </h1>
         <p className="mt-1 text-muted-foreground">
           Resumen general de tu sistema de propuestas
