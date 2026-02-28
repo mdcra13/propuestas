@@ -1,349 +1,263 @@
 "use client"
 
-import React from "react"
-
 import { useState } from "react"
 import useSWR from "swr"
-import { Plus, Pencil, Trash2, GripVertical } from "lucide-react"
-import { toast } from "sonner"
+import {
+  FileText,
+  Building2,
+  Eye,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Layers,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog"
-import type {
-  Plantilla,
-  SeccionPlantilla,
-  TipoPlantilla,
-  EstatusPlantilla,
-} from "@/lib/types"
+import { Card, CardContent } from "@/components/ui/card"
+import type { Plantilla } from "@/lib/types"
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
-function generateTempId() {
-  return "sec-" + Math.random().toString(36).substring(2, 9)
+function PlantillaSlideshow({
+  plantilla,
+  onClose,
+}: {
+  plantilla: Plantilla
+  onClose: () => void
+}) {
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const totalSlides = plantilla.secciones.length + 1
+
+  const goPrev = () => setCurrentSlide((s) => Math.max(0, s - 1))
+  const goNext = () => setCurrentSlide((s) => Math.min(totalSlides - 1, s + 1))
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/80 p-4 backdrop-blur-sm">
+      <div className="flex w-full max-w-4xl flex-col">
+        {/* Close button */}
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-sm font-medium text-background/80">
+            {currentSlide + 1} / {totalSlides}
+          </p>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="text-background hover:bg-background/10 hover:text-background"
+            aria-label="Cerrar vista previa"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+
+        {/* Slide container - A4 aspect ratio */}
+        <div className="relative aspect-[297/210] w-full overflow-hidden rounded-lg bg-card shadow-2xl">
+          {currentSlide === 0 ? (
+            /* Cover Slide */
+            <div className="flex h-full flex-col">
+              <div className="flex flex-1 flex-col items-center justify-center gap-6 p-12">
+                <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[hsl(var(--sidebar-background))]">
+                  {plantilla.tipo === "Propuesta" ? (
+                    <FileText className="h-10 w-10 text-primary" />
+                  ) : (
+                    <Building2 className="h-10 w-10 text-primary" />
+                  )}
+                </div>
+                <div className="text-center">
+                  <h1 className="text-balance text-4xl font-bold tracking-tight text-foreground">
+                    {plantilla.nombre}
+                  </h1>
+                  <div className="mt-4 flex items-center justify-center gap-3">
+                    <Badge variant="outline" className="text-sm">
+                      {plantilla.tipo}
+                    </Badge>
+                    <span className="text-sm text-muted-foreground">
+                      {plantilla.secciones.length} secciones
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-[hsl(var(--sidebar-background))] px-8 py-4">
+                <p className="text-center text-sm text-[hsl(var(--sidebar-foreground))]">
+                  Plantilla del Sistema de Propuestas
+                </p>
+              </div>
+            </div>
+          ) : (
+            /* Section Slide */
+            <div className="flex h-full flex-col">
+              <div className="bg-[hsl(var(--sidebar-background))] px-8 py-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-primary">
+                    {plantilla.nombre}
+                  </p>
+                  <p className="text-xs text-[hsl(var(--sidebar-foreground))]">
+                    Seccion {currentSlide} de {plantilla.secciones.length}
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-1 flex-col justify-center p-12">
+                <div className="mb-2 flex items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-lg font-bold text-primary-foreground">
+                    {currentSlide}
+                  </span>
+                  <h2 className="text-balance text-3xl font-bold text-foreground">
+                    {plantilla.secciones[currentSlide - 1].titulo}
+                  </h2>
+                </div>
+                <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+                  {plantilla.secciones[currentSlide - 1].descripcion}
+                </p>
+              </div>
+              <div className="border-t border-border px-8 py-3">
+                <p className="text-center text-xs text-muted-foreground">
+                  Pagina {currentSlide + 1} de {totalSlides}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Navigation */}
+        <div className="mt-4 flex items-center justify-center gap-4">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={goPrev}
+            disabled={currentSlide === 0}
+            className="border-background/20 bg-transparent text-background hover:bg-background/10 hover:text-background disabled:opacity-30"
+            aria-label="Diapositiva anterior"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex items-center gap-1.5">
+            {Array.from({ length: totalSlides }).map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setCurrentSlide(i)}
+                className={`h-2 rounded-full transition-all ${
+                  i === currentSlide
+                    ? "w-6 bg-primary"
+                    : "w-2 bg-background/40 hover:bg-background/60"
+                }`}
+                aria-label={`Ir a diapositiva ${i + 1}`}
+              />
+            ))}
+          </div>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={goNext}
+            disabled={currentSlide === totalSlides - 1}
+            className="border-background/20 bg-transparent text-background hover:bg-background/10 hover:text-background disabled:opacity-30"
+            aria-label="Siguiente diapositiva"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function PlantillasPage() {
-  const { data: plantillas = [], mutate } = useSWR<Plantilla[]>(
+  const { data: plantillas = [] } = useSWR<Plantilla[]>(
     "/api/plantillas",
     fetcher,
   )
 
-  const [formOpen, setFormOpen] = useState(false)
-  const [editPlantilla, setEditPlantilla] = useState<Plantilla | null>(null)
+  const [previewPlantilla, setPreviewPlantilla] = useState<Plantilla | null>(
+    null,
+  )
 
-  const [nombre, setNombre] = useState("")
-  const [tipo, setTipo] = useState<TipoPlantilla>("Propuesta")
-  const [estatus, setEstatus] = useState<EstatusPlantilla>("Activa")
-  const [secciones, setSecciones] = useState<SeccionPlantilla[]>([])
-
-  function openNew() {
-    setNombre("")
-    setTipo("Propuesta")
-    setEstatus("Activa")
-    setSecciones([
-      {
-        id: generateTempId(),
-        titulo: "",
-        descripcion: "",
-        orden: 1,
-      },
-    ])
-    setEditPlantilla(null)
-    setFormOpen(true)
-  }
-
-  function openEdit(p: Plantilla) {
-    setNombre(p.nombre)
-    setTipo(p.tipo)
-    setEstatus(p.estatus)
-    setSecciones([...p.secciones])
-    setEditPlantilla(p)
-    setFormOpen(true)
-  }
-
-  function addSeccion() {
-    setSecciones([
-      ...secciones,
-      {
-        id: generateTempId(),
-        titulo: "",
-        descripcion: "",
-        orden: secciones.length + 1,
-      },
-    ])
-  }
-
-  function removeSeccion(id: string) {
-    setSecciones(
-      secciones
-        .filter((s) => s.id !== id)
-        .map((s, i) => ({ ...s, orden: i + 1 })),
-    )
-  }
-
-  function updateSeccion(
-    id: string,
-    field: keyof SeccionPlantilla,
-    value: string,
-  ) {
-    setSecciones(
-      secciones.map((s) => (s.id === id ? { ...s, [field]: value } : s)),
-    )
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    const body = { nombre, tipo, estatus, secciones }
-
-    if (editPlantilla) {
-      await fetch(`/api/plantillas/${editPlantilla.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      })
-      toast.success("Plantilla actualizada")
-    } else {
-      await fetch("/api/plantillas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      })
-      toast.success("Plantilla creada")
-    }
-    mutate()
-    setFormOpen(false)
-  }
-
-  async function handleDelete(id: string) {
-    await fetch(`/api/plantillas/${id}`, { method: "DELETE" })
-    mutate()
-    toast.success("Plantilla eliminada")
+  const iconMap: Record<string, React.ReactNode> = {
+    Propuesta: <FileText className="h-8 w-8 text-primary" />,
+    "Perfil Empresa": <Building2 className="h-8 w-8 text-primary" />,
   }
 
   return (
     <div className="p-6 lg:p-8">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Plantillas
-          </h1>
-          <p className="mt-1 text-muted-foreground">
-            Configura las plantillas para propuestas y perfiles
-          </p>
-        </div>
-        <Button onClick={openNew}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nueva Plantilla
-        </Button>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">
+          Plantillas
+        </h1>
+        <p className="mt-1 text-muted-foreground">
+          Plantillas predefinidas para propuestas y perfiles de empresa
+        </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2">
         {plantillas.map((p) => (
-          <Card key={p.id}>
-            <CardHeader className="flex flex-row items-start justify-between">
-              <div className="space-y-1">
-                <CardTitle className="text-lg text-foreground">{p.nombre}</CardTitle>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">{p.tipo}</Badge>
-                  <Badge
-                    variant={p.estatus === "Activa" ? "default" : "secondary"}
-                  >
-                    {p.estatus}
-                  </Badge>
+          <Card
+            key={p.id}
+            className="group overflow-hidden border-border transition-shadow hover:shadow-lg"
+          >
+            {/* Card header band */}
+            <div className="bg-[hsl(var(--sidebar-background))] px-6 py-5">
+              <div className="flex items-center gap-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[hsl(var(--sidebar-accent))]">
+                  {iconMap[p.tipo] || (
+                    <Layers className="h-8 w-8 text-primary" />
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-[hsl(var(--sidebar-primary-foreground))]">
+                    {p.nombre}
+                  </h2>
+                  <div className="mt-1 flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className="border-[hsl(var(--sidebar-border))] text-[hsl(var(--sidebar-foreground))]"
+                    >
+                      {p.tipo}
+                    </Badge>
+                    <span className="text-xs text-[hsl(var(--sidebar-foreground))]">
+                      {p.secciones.length} secciones
+                    </span>
+                  </div>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-3 text-sm text-muted-foreground">
-                {p.secciones.length} secciones
-              </p>
-              <div className="mb-4 space-y-1">
-                {p.secciones.map((s) => (
-                  <div
-                    key={s.id}
-                    className="flex items-center gap-2 text-sm text-muted-foreground"
-                  >
-                    <GripVertical className="h-3 w-3 shrink-0" />
-                    {s.titulo || "Sin titulo"}
+            </div>
+
+            <CardContent className="p-6">
+              {/* Sections list */}
+              <div className="mb-5 space-y-2">
+                {p.secciones.map((sec, idx) => (
+                  <div key={sec.id} className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-semibold text-foreground">
+                      {idx + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground">
+                        {sec.titulo}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {sec.descripcion}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openEdit(p)}
-                >
-                  <Pencil className="mr-1 h-3 w-3" />
-                  Editar
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDelete(p.id)}
-                >
-                  <Trash2 className="mr-1 h-3 w-3" />
-                  Eliminar
-                </Button>
-              </div>
+
+              <Button
+                className="w-full"
+                onClick={() => setPreviewPlantilla(p)}
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                Vista Previa
+              </Button>
             </CardContent>
           </Card>
         ))}
-
-        {plantillas.length === 0 && (
-          <div className="col-span-full py-12 text-center text-muted-foreground">
-            No hay plantillas. Crea una nueva para empezar.
-          </div>
-        )}
       </div>
 
-      <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-foreground">
-              {editPlantilla ? "Editar Plantilla" : "Nueva Plantilla"}
-            </DialogTitle>
-            <DialogDescription>
-              Define el nombre, tipo y las secciones de la plantilla
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex gap-3">
-              <div className="flex-1 space-y-2">
-                <Label htmlFor="tpl-nombre">Nombre</Label>
-                <Input
-                  id="tpl-nombre"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  placeholder="Propuesta Comercial Estandar"
-                  required
-                />
-              </div>
-              <div className="w-44 space-y-2">
-                <Label>Tipo</Label>
-                <Select
-                  value={tipo}
-                  onValueChange={(v) => setTipo(v as TipoPlantilla)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Propuesta">Propuesta</SelectItem>
-                    <SelectItem value="Perfil Empresa">
-                      Perfil Empresa
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="w-32 space-y-2">
-                <Label>Estatus</Label>
-                <Select
-                  value={estatus}
-                  onValueChange={(v) => setEstatus(v as EstatusPlantilla)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Activa">Activa</SelectItem>
-                    <SelectItem value="Inactiva">Inactiva</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-base">Secciones</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addSeccion}
-                >
-                  <Plus className="mr-1 h-3 w-3" />
-                  Agregar Seccion
-                </Button>
-              </div>
-
-              {secciones.map((sec, idx) => (
-                <div
-                  key={sec.id}
-                  className="rounded-lg border border-border bg-muted/50 p-4"
-                >
-                  <div className="mb-3 flex items-center justify-between">
-                    <span className="text-sm font-medium text-foreground">
-                      Seccion {idx + 1}
-                    </span>
-                    {secciones.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => removeSeccion(sec.id)}
-                        aria-label="Eliminar seccion"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
-                  </div>
-                  <div className="space-y-3">
-                    <Input
-                      placeholder="Titulo de la seccion"
-                      value={sec.titulo}
-                      onChange={(e) =>
-                        updateSeccion(sec.id, "titulo", e.target.value)
-                      }
-                      required
-                    />
-                    <Textarea
-                      placeholder="Descripcion / instrucciones para esta seccion"
-                      value={sec.descripcion}
-                      onChange={(e) =>
-                        updateSeccion(sec.id, "descripcion", e.target.value)
-                      }
-                      rows={2}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setFormOpen(false)}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit">
-                {editPlantilla ? "Guardar Cambios" : "Crear Plantilla"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      {previewPlantilla && (
+        <PlantillaSlideshow
+          plantilla={previewPlantilla}
+          onClose={() => setPreviewPlantilla(null)}
+        />
+      )}
     </div>
   )
 }

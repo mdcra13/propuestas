@@ -67,26 +67,30 @@ let clientes: Cliente[] = [
 
 let plantillas: Plantilla[] = [
   {
-    id: "tpl-1",
-    nombre: "Propuesta Comercial Estandar",
+    id: "tpl-propuesta",
+    nombre: "Propuesta Comercial",
     tipo: "Propuesta",
     secciones: [
-      { id: "s1", titulo: "Quienes Somos", descripcion: "Descripcion de la empresa", orden: 1 },
-      { id: "s2", titulo: "Servicios Ofrecidos", descripcion: "Detalle de servicios", orden: 2 },
-      { id: "s3", titulo: "Costos", descripcion: "Tabla de costos y precios", orden: 3 },
-      { id: "s4", titulo: "Terminos y Condiciones", descripcion: "Condiciones del servicio", orden: 4 },
+      { id: "sp1", titulo: "Quienes Somos", descripcion: "Presentacion de la empresa, trayectoria y valores.", orden: 1 },
+      { id: "sp2", titulo: "Proyectos y Clientes", descripcion: "Principales proyectos realizados y clientes atendidos.", orden: 2 },
+      { id: "sp3", titulo: "Descripcion General de la Solucion", descripcion: "Resumen ejecutivo de la solucion propuesta al cliente.", orden: 3 },
+      { id: "sp4", titulo: "Etapas", descripcion: "Fases del proyecto con descripcion y entregables. Se pueden agregar varias etapas.", orden: 4 },
+      { id: "sp5", titulo: "Responsabilidades", descripcion: "Responsabilidades del proveedor y del cliente.", orden: 5 },
+      { id: "sp6", titulo: "Costos Asociados a la Solucion", descripcion: "Desglose de costos, precios unitarios y totales.", orden: 6 },
+      { id: "sp7", titulo: "Forma de Pago", descripcion: "Condiciones y metodos de pago aceptados.", orden: 7 },
     ],
     estatus: "Activa",
     creadaEn: new Date().toISOString(),
   },
   {
-    id: "tpl-2",
-    nombre: "Perfil Corporativo",
+    id: "tpl-perfil",
+    nombre: "Perfil de Empresa",
     tipo: "Perfil Empresa",
     secciones: [
-      { id: "s5", titulo: "Mision y Vision", descripcion: "Mision y vision de la empresa", orden: 1 },
-      { id: "s6", titulo: "Equipo Directivo", descripcion: "Informacion del equipo", orden: 2 },
-      { id: "s7", titulo: "Portafolio de Servicios", descripcion: "Catalogo de servicios", orden: 3 },
+      { id: "se1", titulo: "Perfil de la Empresa", descripcion: "Sobre nosotros: historia, mision, vision y valores corporativos.", orden: 1 },
+      { id: "se2", titulo: "Principales Clientes", descripcion: "Listado y descripcion de los clientes mas importantes.", orden: 2 },
+      { id: "se3", titulo: "Nuestros Aliados", descripcion: "Socios estrategicos y alianzas comerciales.", orden: 3 },
+      { id: "se4", titulo: "Principales Productos o Servicios", descripcion: "Catalogo de productos y servicios ofrecidos.", orden: 4 },
     ],
     estatus: "Activa",
     creadaEn: new Date().toISOString(),
@@ -97,12 +101,19 @@ let propuestas: Propuesta[] = [
   {
     id: "prop-1",
     idCliente: "demo-1",
-    idPlantilla: "tpl-1",
+    idPlantilla: "tpl-propuesta",
     contenido: {
-      "Quienes Somos": "Somos una empresa lider en tecnologia con mas de 10 anos de experiencia en el mercado panamenoA.",
-      "Servicios Ofrecidos": "Hospedaje web, servidores dedicados, servicios en la nube, y soporte tecnico 24/7.",
-      "Costos": "Plan Basico: $99/mes | Plan Profesional: $249/mes | Plan Empresarial: $499/mes",
-      "Terminos y Condiciones": "Contrato minimo de 12 meses. Soporte incluido. SLA del 99.9%.",
+      "Quienes Somos": "Somos una empresa lider en tecnologia con mas de 10 anos de experiencia en el mercado panameno, especializada en soluciones de infraestructura y servicios en la nube.",
+      "Proyectos y Clientes": "Hemos trabajado con mas de 50 empresas en Panama, incluyendo instituciones financieras, empresas de retail y organizaciones gubernamentales.",
+      "Descripcion General de la Solucion": "Proponemos una solucion integral de hospedaje en la nube con alta disponibilidad, respaldos automaticos y soporte tecnico 24/7.",
+      "Etapas": JSON.stringify([
+        { nombre: "Fase 1 - Analisis", descripcion: "Levantamiento de requerimientos y analisis de la infraestructura actual.", entregable: "Documento de requerimientos" },
+        { nombre: "Fase 2 - Implementacion", descripcion: "Migracion de servidores y configuracion del entorno en la nube.", entregable: "Entorno productivo configurado" },
+        { nombre: "Fase 3 - Pruebas y Entrega", descripcion: "Pruebas de rendimiento, seguridad y entrega formal al cliente.", entregable: "Informe de pruebas y acta de entrega" },
+      ]),
+      "Responsabilidades": "Proveedor: Implementacion, soporte y mantenimiento.\nCliente: Proveer accesos, aprobar entregables y designar contraparte tecnica.",
+      "Costos Asociados a la Solucion": "Plan Basico: $99/mes | Plan Profesional: $249/mes | Plan Empresarial: $499/mes. Incluye soporte y respaldos.",
+      "Forma de Pago": "50% al inicio del proyecto, 25% en la entrega de la Fase 2 y 25% al cierre. Transferencia bancaria o ACH.",
     },
     estatus: "Activa",
     hashToken: "demo-token-abc123xyz",
@@ -115,10 +126,13 @@ let propuestas: Propuesta[] = [
         version: 0,
         etiqueta: "v0",
         contenido: {
-          "Quienes Somos": "Somos una empresa lider en tecnologia con mas de 10 anos de experiencia en el mercado panamenoA.",
-          "Servicios Ofrecidos": "Hospedaje web, servidores dedicados, servicios en la nube, y soporte tecnico 24/7.",
-          "Costos": "Plan Basico: $99/mes | Plan Profesional: $249/mes | Plan Empresarial: $499/mes",
-          "Terminos y Condiciones": "Contrato minimo de 12 meses. Soporte incluido. SLA del 99.9%.",
+          "Quienes Somos": "Somos una empresa lider en tecnologia con mas de 10 anos de experiencia en el mercado panameno.",
+          "Proyectos y Clientes": "Hemos trabajado con mas de 50 empresas en Panama.",
+          "Descripcion General de la Solucion": "Solucion integral de hospedaje en la nube.",
+          "Etapas": "[]",
+          "Responsabilidades": "Proveedor: Implementacion y soporte. Cliente: Proveer accesos.",
+          "Costos Asociados a la Solucion": "Plan Basico: $99/mes",
+          "Forma de Pago": "50% al inicio, 50% al cierre.",
         },
         creadaEn: new Date().toISOString(),
         nota: "Version inicial",
@@ -181,7 +195,7 @@ export function eliminarCliente(id: string): boolean {
   return clientes.length < len
 }
 
-// --- Plantillas ---
+// --- Plantillas (static, read-only) ---
 export function getPlantillas(): Plantilla[] {
   return [...plantillas]
 }
@@ -192,30 +206,6 @@ export function getPlantilla(id: string): Plantilla | undefined {
 
 export function getPlantillasActivas(): Plantilla[] {
   return plantillas.filter((p) => p.estatus === "Activa")
-}
-
-export function crearPlantilla(data: Omit<Plantilla, "id" | "creadaEn">): Plantilla {
-  const nueva: Plantilla = {
-    ...data,
-    id: generateId(),
-    creadaEn: new Date().toISOString(),
-  }
-  plantillas = [...plantillas, nueva]
-  return nueva
-}
-
-export function actualizarPlantilla(id: string, data: Partial<Plantilla>): Plantilla | undefined {
-  const idx = plantillas.findIndex((p) => p.id === id)
-  if (idx === -1) return undefined
-  plantillas[idx] = { ...plantillas[idx], ...data }
-  plantillas = [...plantillas]
-  return plantillas[idx]
-}
-
-export function eliminarPlantilla(id: string): boolean {
-  const len = plantillas.length
-  plantillas = plantillas.filter((p) => p.id !== id)
-  return plantillas.length < len
 }
 
 // --- Propuestas ---

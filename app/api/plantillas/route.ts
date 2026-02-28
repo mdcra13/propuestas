@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getPlantillas, getPlantillasActivas, crearPlantilla } from "@/lib/store"
+import { getPlantillas, getPlantillasActivas } from "@/lib/store"
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -8,10 +8,4 @@ export async function GET(request: Request) {
     return NextResponse.json(getPlantillasActivas())
   }
   return NextResponse.json(getPlantillas())
-}
-
-export async function POST(request: Request) {
-  const data = await request.json()
-  const plantilla = crearPlantilla(data)
-  return NextResponse.json(plantilla, { status: 201 })
 }

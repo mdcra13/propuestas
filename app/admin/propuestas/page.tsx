@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import useSWR from "swr"
 import {
   Plus,
@@ -9,11 +10,14 @@ import {
   Copy,
   ExternalLink,
   History,
+  FileText,
+  Building2,
 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -22,14 +26,29 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import type { Cliente, Plantilla, Propuesta } from "@/lib/types"
-import { PropuestaCreator } from "@/components/propuesta-creator"
 import { PropuestaPreview } from "@/components/propuesta-preview"
 import { PropuestaVersiones } from "@/components/propuesta-versiones"
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
 export default function PropuestasPage() {
+  const router = useRouter()
   const { data: propuestas = [], mutate } = useSWR<Propuesta[]>(
     "/api/propuestas",
     fetcher,
@@ -40,7 +59,9 @@ export default function PropuestasPage() {
     fetcher,
   )
 
-  const [creatorOpen, setCreatorOpen] = useState(false)
+  const [selectorOpen, setSelectorOpen] = useState(false)
+  const [selectedCliente, setSelectedCliente] = useState("")
+  const [selectedPlantilla, setSelectedPlantilla] = useState("")
   const [previewPropuesta, setPreviewPropuesta] = useState<Propuesta | null>(
     null,
   )
@@ -61,12 +82,31 @@ export default function PropuestasPage() {
     toast.success("Enlace copiado al portapapeles")
   }
 
+  function handleIrAEditor() {
+    if (!selectedCliente || !selectedPlantilla) {
+      toast.error("Selecciona un cliente y una plantilla")
+      return
+    }
+    router.push(
+      `/admin/propuestas/nueva?cliente=${selectedCliente}&plantilla=${selectedPlantilla}`,
+    )
+    setSelectorOpen(false)
+  }
+
+  function openSelector() {
+    setSelectedCliente("")
+    setSelectedPlantilla("")
+    setSelectorOpen(true)
+  }
+
   const stats = {
     total: propuestas.length,
     activas: propuestas.filter((p) => p.estatus === "Activa").length,
     aprobadas: propuestas.filter((p) => p.estatus === "Aprobada").length,
     declinadas: propuestas.filter((p) => p.estatus === "Declinada").length,
   }
+
+  const clientesActivos = clientes.filter((c) => c.estatus === "Activo")
 
   return (
     <div className="p-6 lg:p-8">
@@ -79,7 +119,7 @@ export default function PropuestasPage() {
             Crea y gestiona propuestas comerciales
           </p>
         </div>
-        <Button onClick={() => setCreatorOpen(true)}>
+        <Button onClick={openSelector}>
           <Plus className="mr-2 h-4 w-4" />
           Nueva Propuesta
         </Button>
@@ -218,11 +258,7 @@ export default function PropuestasPage() {
                         </Button>
                       )}
                       {p.estatus === "Activa" && !p.tokenUsado && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          asChild
-                        >
+                        <Button variant="ghost" size="icon" asChild>
                           <a
                             href={`/portal/${p.hashToken}`}
                             target="_blank"
@@ -242,18 +278,92 @@ export default function PropuestasPage() {
         </Table>
       </div>
 
-      {creatorOpen && (
-        <PropuestaCreator
-          open={creatorOpen}
-          onOpenChange={setCreatorOpen}
-          clientes={clientes.filter((c) => c.estatus === "Activo")}
-          plantillas={plantillas}
-          onCreated={() => {
-            mutate()
-            setCreatorOpen(false)
-          }}
-        />
-      )}
+      {/* Selector Dialog */}
+      <Dialog open={selectorOpen} onOpenChange={setSelectorOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">
+              Nueva Propuesta
+            </DialogTitle>
+            <DialogDescription>
+              Selecciona un cliente y una plantilla para comenzar a editar
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Cliente</Label>
+              <Select
+                value={selectedCliente}
+                onValueChange={setSelectedCliente}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clientesActivos.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Plantilla</Label>
+              <div className="grid gap-2">
+                {plantillas.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setSelectedPlantilla(p.id)}
+                    className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
+                      selectedPlantilla === p.id
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:bg-muted/50"
+                    }`}
+                  >
+                    <div
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
+                        selectedPlantilla === p.id
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {p.tipo === "Propuesta" ? (
+                        <FileText className="h-5 w-5" />
+                      ) : (
+                        <Building2 className="h-5 w-5" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        {p.nombre}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {p.secciones.length} secciones
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSelectorOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleIrAEditor}
+              disabled={!selectedCliente || !selectedPlantilla}
+            >
+              Continuar al Editor
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {previewPropuesta && (
         <PropuestaPreview
